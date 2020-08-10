@@ -1,0 +1,28 @@
+name: deploy
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Get the environment
+      run: |
+        echo ::set-env name=ENVIRONMENT::${GITHUB_REF#refs/tags/}
+        echo ::set-env name=STACK::${GITHUB_REPOSITORY##*-}
+
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v1.1.1
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+        repository: fedjabosnic/tf-infrastructure-${{ env.ENVIRONMENT }}
+        event-type: stack-deploy
+        client-payload: '{"environment": "${{ env.ENVIRONMENT }}", "stack": "${{ env.STACK }}", "sha": "${{ github.sha }}"}'

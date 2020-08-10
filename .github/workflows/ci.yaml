@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [master]
+
+env:
+  TF_VERSION: 0.12.26
+  AWS_DEFAULT_REGION: 'eu-west-1'
+
+jobs:
+  ci:
+    name: ci 
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Pull code
+      uses: actions/checkout@v1
+
+    - name: Install terraform
+      uses: hashicorp/setup-terraform@v1.1.0
+      with:
+        terraform_wrapper: false
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Prepare local environment
+      run : |
+        ln -sf .local/.secrets .secrets
+        ln -sf .local/.variables/backend.tf backend.tf
+        ln -sf .local/.variables/terraform.tfvars terraform.tfvars
+
+    - name: Run terraform init
+      run: terraform init -backend=false
+
+    - name: Run terraform format
+      run: terraform fmt
+
+    - name: Run terraform validate
+      run: terraform validate
